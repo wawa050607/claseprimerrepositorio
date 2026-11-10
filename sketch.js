@@ -350,3 +350,50 @@ function dibujarInstrumento(idNum, animar) {
 }
 
 function dibujarIndicadorEstado() {
+  fill(250);
+  textSize(13);
+  text(`Escena actual: ${estadoActual} / 7`, width - 100, 35);
+}
+
+// --- INTERACCIÓN POR CLIC EN PANTALLA ---
+
+function mousePressed() {
+  if (estadoActual >= 1 && estadoActual <= 5) {
+    let xBtn = width - 220;
+    let yBtn = height / 2 - 30;
+    
+    if (mouseX > xBtn - 70 && mouseX < xBtn + 70 && mouseY > yBtn - 60 && mouseY < yBtn + 70) {
+      avanzarEscena();
+    }
+  }
+}
+
+// --- LÓGICA DE CONTROL ---
+
+function enviarConfesion() {
+  if (inputConfesion.value().trim() !== "") {
+    confesionGuardada = inputConfesion.value();
+    avanzarEscena();
+  }
+}
+
+function avanzarEscena() {
+  if (estadoActual < 7) {
+    estadoActual++;
+    actualizarVisibilidadControles();
+  }
+}
+
+function retrocederEscena() {
+  if (estadoActual > 0) {
+    estadoActual--;
+    actualizarVisibilidadControles();
+  }
+}
+
+function actualizarVisibilidadControles() {
+  if (estadoActual !== 6) {
+    inputConfesion.hide();
+    botonEnviar.hide();
+  }
+}
