@@ -2,27 +2,68 @@ let escenaActual = 1;
 const totalEscenas = 8;
 
 let imgEscena1 = null;
+let cancion = null;
+let musicaSonando = false;
+
 let btnX, btnY, btnAncho, btnAlto;
+let btnAudioX, btnAudioY, btnAudioAncho, btnAudioAlto;
 
 function setup() {
-  createCanvas(900, 650);
+  createCanvas(windowWidth, windowHeight);
   imageMode(CENTER);
   textAlign(CENTER, CENTER);
   rectMode(CENTER);
 
-  btnAncho = 240;
-  btnAlto = 62;
-  btnX = width / 2;
-  btnY = height - 65;
+  actualizarPosiciones();
 
-  // Intenta cargar la imagen tanto desde la raíz como desde /public
-  loadImage(
+  // 1. Carga la imagen
+  const posiblesRutas = [
     'escena1.png',
-    (img) => { imgEscena1 = img; },
+    'IMAGEN ESCENA 1.png',
+    'IMAGEN ESCENA 1.jpg',
+    'assets/escena1.png',
+    '/escena1.png'
+  ];
+  intentarCargarImagen(posiblesRutas, 0);
+
+  // 2. Carga la canción con el nombre exacto de tu archivo
+  cancion = createAudio('elviejogordo.mp3');
+  cancion.volume(0.7); // Volumen al 70%
+}
+
+function intentarCargarImagen(rutas, indice) {
+  if (indice >= rutas.length) return;
+  loadImage(
+    rutas[indice],
+    (img) => {
+      if (img && img.width > 0) {
+        imgEscena1 = img;
+      } else {
+        intentarCargarImagen(rutas, indice + 1);
+      }
+    },
     () => {
-      loadImage('/escena1.png', (img) => { imgEscena1 = img; });
+      intentarCargarImagen(rutas, indice + 1);
     }
   );
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  actualizarPosiciones();
+}
+
+function actualizarPosiciones() {
+  btnAncho = 220;
+  btnAlto = 54;
+  btnX = width / 2;
+  btnY = height - 55;
+
+  // Botón de audio en la esquina superior derecha
+  btnAudioAncho = 140;
+  btnAudioAlto = 38;
+  btnAudioX = width - 95;
+  btnAudioY = 38;
 }
 
 function draw() {
@@ -45,37 +86,31 @@ function dibujarEscena1() {
   // Fondo oscuro
   background(8, 6, 10);
   noStroke();
-  for (let r = 520; r > 0; r -= 25) {
+  for (let r = max(width, height) * 0.7; r > 0; r -= 30) {
     fill(38, 10, 15, 14);
-    ellipse(width / 2, height / 2 - 40, r * 1.4, r);
+    ellipse(width / 2, height * 0.42, r * 1.3, r);
   }
+
+  let altoImg = height * 0.48;
+  let posYImg = height * 0.34;
+  let posYTitulo = height - 135;
 
   // Imagen PNG centrada
   if (imgEscena1 && imgEscena1.width > 0) {
-    let altoImg = 360;
     let anchoImg = (imgEscena1.width / imgEscena1.height) * altoImg;
-    image(imgEscena1, width / 2, height / 2 - 80, anchoImg, altoImg);
-  } else {
-    noFill();
-    stroke(180, 50, 50);
-    strokeWeight(2);
-    rect(width / 2, height / 2 - 80, 260, 320, 10);
-    noStroke();
-    fill(230, 100, 100);
-    textFont('sans-serif');
-    textSize(16);
-    text("Falta 'escena1.png' en la carpeta del proyecto", width / 2, height / 2 - 80);
+    image(imgEscena1, width / 2, posYImg, anchoImg, altoImg);
   }
 
   // Fuente Agincourt
   textFont('Agincourt');
 
   // Título "Nacho y sus aguacates"
-  textSize(78);
+  let tamTitulo = constrain(width * 0.065, 44, 72);
+  textSize(tamTitulo);
   fill(0);
-  text("Nacho y sus aguacates", width / 2 + 4, height - 156);
+  text("Nacho y sus aguacates", width / 2 + 3, posYTitulo + 3);
   fill(235, 215, 175);
-  text("Nacho y sus aguacates", width / 2, height - 160);
+  text("Nacho y sus aguacates", width / 2, posYTitulo);
 
   // Botón Empezar
   let sobreBoton = mouseEnBoton(btnX, btnY, btnAncho, btnAlto);
@@ -94,8 +129,44 @@ function dibujarEscena1() {
 
   noStroke();
   fill(245, 240, 230);
-  textSize(32);
-  text("EMPEZAR", btnX, btnY - 3);
+  textSize(28);
+  text("EMPEZAR", btnX, btnY - 2);
+
+  // Botón discreto de Música (esquina superior derecha)
+  dibujarBotonAudio(sobreBoton);
+}
+
+function dibujarBotonAudio(yaTieneCursorHand) {
+  let sobreAudio = mouseEnBoton(btnAudioX, btnAudioY, btnAudioAncho, btnAudioAlto);
+  if (sobreAudio) {
+    fill(60, 20, 25);
+    stroke(235, 215, 175);
+    cursor(HAND);
+  } else {
+    fill(22, 16, 20);
+    stroke(120, 100, 80);
+    if (!yaTieneCursorHand) cursor(ARROW);
+  }
+
+  strokeWeight(1.5);
+  rect(btnAudioX, btnAudioY, btnAudioAncho, btnAudioAlto, 20);
+
+  noStroke();
+  fill(235, 215, 175);
+  textFont('sans-serif');
+  textSize(14);
+  text(musicaSonando ? "🔊 Sonando" : "🔇 Activar música", btnAudioX, btnAudioY);
+}
+
+function alternarMusica() {
+  if (!cancion) return;
+  if (!musicaSonando) {
+    cancion.loop();
+    musicaSonando = true;
+  } else {
+    cancion.pause();
+    musicaSonando = false;
+  }
 }
 
 // ==========================================
@@ -154,8 +225,25 @@ function mostrarPlantillaEscena(numero, titulo) {
 // ==========================================
 function mousePressed() {
   if (escenaActual === 1) {
+    // 1. Si hace clic en el botón de música de la esquina
+    if (mouseEnBoton(btnAudioX, btnAudioY, btnAudioAncho, btnAudioAlto)) {
+      alternarMusica();
+      return;
+    }
+
+    // 2. Si hace clic en "EMPEZAR"
     if (mouseEnBoton(btnX, btnY, btnAncho, btnAlto)) {
+      if (cancion && !musicaSonando) {
+        cancion.loop();
+        musicaSonando = true;
+      }
       escenaActual = 2;
+      return;
+    }
+
+    // 3. Si hace clic en cualquier parte del fondo o del personaje, activa la música
+    if (!musicaSonando) {
+      alternarMusica();
     }
   } else if (escenaActual < totalEscenas) {
     escenaActual++;
